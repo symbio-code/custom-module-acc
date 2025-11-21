@@ -1,10 +1,9 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 
-class User(SQLModel, table=True):
-    __tablename__ = "users"
+class AppUser(SQLModel, table=True):
+    """Model untuk single user application"""
+    __tablename__ = "app_user"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(index=True)
-    password_hash: str
-    role: str = "user"
+    password_hash: str  # Password yang sudah di-hash

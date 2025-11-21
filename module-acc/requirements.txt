@@ -7,3 +7,5 @@ alembic
 bcrypt
 jinja2
 python-multipart
+sqlmodel
+passlib
