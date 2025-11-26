@@ -1,0 +1,13 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Cash Flow Statement{% endblock %}
+{% block content %}
+<div>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-4xl font-black">Cash Flow Statement</h1>
+    <div class="flex gap-3"><button class="px-4 h-10 rounded-lg">Print</button><button class="px-4 h-10 rounded-lg">Export</button></div>
+  </div>
+  <div class="rounded-xl border p-4 bg-white dark:bg-slate-900">
+    <table class="w-full text-sm"><thead><tr><th>PARTICULARS</th><th class="text-right">AMOUNT ($)</th></tr></thead><tbody><!-- rows --></tbody></table>
+  </div>
+</div>
+{% endblock %}

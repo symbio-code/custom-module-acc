@@ -1,0 +1,19 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Income Statement{% endblock %}
+{% block content %}
+<div>
+  <header class="mb-6 flex items-center justify-between">
+    <div>
+      <p class="text-sm text-slate-500">Reports / Financial</p>
+      <h1 class="text-3xl font-bold">Income Statement</h1>
+    </div>
+    <div class="flex gap-2">
+      <button class="px-4 h-10 rounded-lg">Export</button>
+      <button class="px-4 h-10 rounded-lg">Print</button>
+    </div>
+  </header>
+  <div class="rounded-xl border p-4 bg-white dark:bg-slate-900">
+    <table class="w-full text-sm"><thead><tr><th>Account</th><th class="text-right">Amount (USD)</th></tr></thead><tbody><!-- report rows --></tbody></table>
+  </div>
+</div>
+{% endblock %}

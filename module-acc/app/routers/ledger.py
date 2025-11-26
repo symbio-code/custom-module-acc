@@ -6,20 +6,22 @@ from app.services.ledger_service import (
     get_ledger_for_account, 
     list_ledger
 )
+from app.security import require_role
+from app.models.user import User
 
 router = APIRouter(prefix="/ledger")
 
 @router.post("/post/{journal_id}")
-def post_journal(journal_id: int, db: Session = Depends(get_session)):
+def post_journal(journal_id: int, db: Session = Depends(get_session), current_user: User = Depends(require_role('admin','accountant'))):
     """Endpoint untuk mem-posting journal entry ke ledger"""
     return post_journal_entry(db, journal_id)
 
 @router.get("/")
-def ledger_all(db: Session = Depends(get_session)):
+def ledger_all(db: Session = Depends(get_session), current_user: User = Depends(require_role('admin','accountant','viewer'))):
     """Endpoint untuk mengambil semua ledger entries"""
     return list_ledger(db)
 
 @router.get("/{account_code}")
-def ledger_account(account_code: str, db: Session = Depends(get_session)):
+def ledger_account(account_code: str, db: Session = Depends(get_session), current_user: User = Depends(require_role('admin','accountant','viewer'))):
     """Endpoint untuk mengambil ledger per akun tertentu"""
     return get_ledger_for_account(db, account_code)

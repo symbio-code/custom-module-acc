@@ -1,0 +1,31 @@
+<div class="rounded-xl p-6 border bg-white dark:bg-slate-900">
+  <h3 class="text-lg font-semibold">New Account</h3>
+  <form hx-post="/accounts/" hx-swap="none" class="mt-4 space-y-3">
+    <label class="block">
+      <span class="text-sm">Code</span>
+      <input name="code" type="text" class="form-input mt-1 block w-full" placeholder="e.g. 1000 or 1100100" required />
+    </label>
+    <label class="block">
+      <span class="text-sm">Name</span>
+      <input name="name" type="text" class="form-input mt-1 block w-full" required />
+    </label>
+    <label class="block">
+      <span class="text-sm">Type</span>
+      <select name="account_type" class="form-select mt-1 block w-full">
+        <option value="asset">Asset</option>
+        <option value="liability">Liability</option>
+        <option value="equity">Equity</option>
+        <option value="revenue">Revenue</option>
+        <option value="expense">Expense</option>
+      </select>
+    </label>
+    <label class="block">
+      <span class="text-sm">Parent Code (optional)</span>
+      <input name="parent_code" type="text" class="form-input mt-1 block w-full" placeholder="e.g. 1000" />
+    </label>
+    <div class="flex gap-2">
+      <button type="submit" class="bg-primary text-white px-4 py-2 rounded">Create</button>
+      <button hx-get="/accounts" hx-target="#content" type="button" class="px-4 py-2 rounded border">Cancel</button>
+    </div>
+  </form>
+</div>

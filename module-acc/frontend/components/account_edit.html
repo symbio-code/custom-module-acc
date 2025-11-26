@@ -1,0 +1,42 @@
+<div class="rounded-xl p-6 border bg-white dark:bg-slate-900">
+  <h3 class="text-lg font-semibold">Edit Account {{ account.code }}</h3>
+  <form hx-post="/accounts/{{ account.id }}/edit" hx-swap="none" class="mt-4 space-y-3">
+    <label class="block">
+      <span class="text-sm">Code</span>
+      <input name="code" type="text" class="form-input mt-1 block w-full" value="{{ account.code }}" disabled />
+    </label>
+    <label class="block">
+      <span class="text-sm">Name</span>
+      <input name="name" type="text" class="form-input mt-1 block w-full" value="{{ account.name }}" required />
+    </label>
+    <label class="block">
+      <span class="text-sm">Type</span>
+      <select name="account_type" class="form-select mt-1 block w-full">
+        <option value="asset" {% if account.account_type=='asset' %}selected{% endif %}>Asset</option>
+        <option value="liability" {% if account.account_type=='liability' %}selected{% endif %}>Liability</option>
+        <option value="equity" {% if account.account_type=='equity' %}selected{% endif %}>Equity</option>
+        <option value="revenue" {% if account.account_type=='revenue' %}selected{% endif %}>Revenue</option>
+        <option value="expense" {% if account.account_type=='expense' %}selected{% endif %}>Expense</option>
+      </select>
+    </label>
+    <label class="block">
+      <span class="text-sm">Parent Code (optional)</span>
+      <input name="parent_code" type="text" class="form-input mt-1 block w-full" value="{{ account.parent_code or '' }}" />
+    </label>
+    <label class="flex items-center gap-2">
+      <input name="is_group" type="checkbox" {% if account.is_group %}checked{% endif %} />
+      <span class="text-sm">Is Group</span>
+    </label>
+    <label class="flex items-center gap-2">
+      <input name="is_active" type="checkbox" {% if account.is_active %}checked{% endif %} />
+      <span class="text-sm">Active</span>
+    </label>
+    <div class="flex gap-2">
+      <button type="submit" class="bg-primary text-white px-4 py-2 rounded">Save</button>
+      <button hx-get="/accounts" hx-target="#content" type="button" class="px-4 py-2 rounded border">Cancel</button>
+      <form hx-post="/accounts/{{ account.id }}/delete" hx-swap="none" class="ml-auto">
+        <button type="submit" class="px-3 py-2 rounded border text-red-600">Delete</button>
+      </form>
+    </div>
+  </form>
+</div>

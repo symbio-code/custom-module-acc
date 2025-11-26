@@ -1,0 +1,9 @@
+<nav aria-label="Pagination">
+  <div class="flex items-center gap-2">
+    <a class="inline-flex items-center justify-center size-9 rounded-lg border px-2" href="#">&lt;</a>
+    {% for p in pages %}
+      <a class="inline-flex items-center justify-center size-9 rounded-lg px-3 {% if p==current %}bg-primary text-white{% endif %}" href="#">{{ p }}</a>
+    {% endfor %}
+    <a class="inline-flex items-center justify-center size-9 rounded-lg border px-2" href="#">&gt;</a>
+  </div>
+</nav>

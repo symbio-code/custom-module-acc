@@ -1,0 +1,26 @@
+<div class="p-4">
+  <div class="flex items-center gap-3">
+    <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800" style="background-image:url('https://www.gravatar.com/avatar/?d=mp&s=64');background-size:cover"></div>
+    <div>
+      <p class="font-semibold">User #{{ user.id }}</p>
+      <p class="text-sm text-slate-500">Signed in</p>
+    </div>
+  </div>
+  <div class="mt-3 text-sm">
+    <p class="truncate">Username: <span class="font-medium">{{ user.username }}</span></p>
+    <p>Role: <span class="font-medium">{{ role }}</span></p>
+    <p class="mt-2">Last login: —</p>
+  </div>
+  <div class="mt-4 flex gap-2">
+    <a href="#" hx-get="/profile" hx-target="#content" class="flex-1 text-center px-3 py-2 rounded-lg border">View Profile</a>
+    {% if role in ['admin','accountant'] %}
+    <a href="#" hx-get="/accounts" hx-target="#content" class="flex-1 text-center px-3 py-2 rounded-lg border">Chart of Accounts</a>
+    {% endif %}
+    {% if role == 'admin' %}
+    <a href="#" hx-get="/admin" hx-target="#content" class="flex-1 text-center px-3 py-2 rounded-lg border">Admin Panel</a>
+    {% endif %}
+    <form class="flex-1" hx-post="/auth/logout" hx-swap="none">
+      <button type="submit" class="w-full text-center px-3 py-2 rounded-lg bg-primary text-white">Logout</button>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en" class="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}FinApp{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">tailwind.config={darkMode:'class',theme:{extend:{colors:{primary:'#137fec','background-light':'#f6f7f8','background-dark':'#101922'},fontFamily:{display:['Manrope','sans-serif']}}}}</script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200">
+  {% include 'components/sidebar.html' %}
+  <div class="flex flex-1 flex-col ml-64">
+    {% include 'components/header.html' %}
+    <main id="content" class="flex-1 p-8">{% block content %}{% endblock %}</main>
+  </div>
+</body>
+</html>

@@ -1,30 +1,41 @@
 from sqlmodel import Session, select
+from fastapi import HTTPException
 from app.models.journal import JournalEntry, JournalEntryLine
 
+
 def create_journal_entry(db: Session, entry_data: dict, lines: list):
-    """Membuat entri jurnal baru dengan validasi debit=kredit"""
-    # Step 1: Buat header journal entry
+    """Create journal entry with lines. Validate total debit == total credit before committing."""
+    if not lines or len(lines) == 0:
+        raise HTTPException(status_code=400, detail="Journal must have at least one line")
+
+    total_debit = 0
+    total_credit = 0
+
+    # Compute totals first and validate structure
+    for line in lines:
+        try:
+            d = float(line.get("debit", 0) or 0)
+            c = float(line.get("credit", 0) or 0)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Debit and credit must be numeric")
+        total_debit += d
+        total_credit += c
+
+    if round(total_debit, 2) != round(total_credit, 2):
+        raise HTTPException(status_code=400, detail="Total debit and credit must be equal")
+
+    # Create header and lines in a single transaction
     je = JournalEntry(**entry_data)
     db.add(je)
     db.commit()
     db.refresh(je)
 
-    # Step 2: Tambahkan line items
-    total_debit = 0
-    total_credit = 0
-
     for line in lines:
         jl = JournalEntryLine(journal_entry_id=je.id, **line)
         db.add(jl)
-        total_debit += line.get("debit", 0)
-        total_credit += line.get("credit", 0)
-
-    # Validasi kesamaan debit dan kredit
-    if total_debit != total_credit:
-        db.rollback()
-        raise ValueError("Total debit dan kredit harus sama")
 
     db.commit()
+    db.refresh(je)
     return je
 
 def get_journal_entry(db: Session, id: int):

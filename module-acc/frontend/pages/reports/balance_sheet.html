@@ -1,0 +1,13 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Balance Sheet{% endblock %}
+{% block content %}
+<div>
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">Balance Sheet</h1>
+    <p class="text-sm text-slate-500">Generate a snapshot of your company’s financial health.</p>
+  </header>
+  <div class="rounded-xl border p-6 bg-white dark:bg-slate-900">
+    <table class="w-full text-sm"><thead><tr><th>Account</th><th class="text-right">Dec 31, 2023</th><th class="text-right">Dec 31, 2022</th></tr></thead><tbody><!-- rows --></tbody></table>
+  </div>
+</div>
+{% endblock %}

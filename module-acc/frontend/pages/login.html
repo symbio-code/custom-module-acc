@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white dark:bg-background-dark rounded-xl shadow-lg p-8">
+      <div class="text-center mb-6">
+        <div class="h-12 w-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+          <svg class="h-6 w-6 text-primary" fill="currentColor" viewBox="0 0 24 24"></svg>
+        </div>
+        <h1 class="text-2xl font-bold mt-4">Welcome Back</h1>
+        <p class="text-slate-600">Log in to your account to continue.</p>
+      </div>
+      <form method="post" action="/auth/login" hx-post="/auth/login" hx-swap="none">
+        {% include 'components/form_field.html' with {'label':'Password','name':'password','type':'password','placeholder':'Enter your password'} %}
+        <div class="mt-4">
+          <button class="w-full bg-primary text-white rounded-lg h-12">Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

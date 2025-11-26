@@ -1,0 +1,32 @@
+{% extends 'layouts/app.html' %}
+{% block title %}New Journal Entry{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="mb-6"><p class="text-sm text-primary">Journals</p><h1 class="text-3xl font-bold">New Journal Entry</h1></div>
+  <div class="bg-white dark:bg-background-dark p-6 rounded-xl border">
+    <form hx-post="/journal/" hx-swap="none" id="journal-form">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% include 'components/form_field.html' with {'label':'Date','name':'date','type':'date'} %}
+        {% include 'components/form_field.html' with {'label':'Reference No.','name':'ref'} %}
+        <label class="md:col-span-3"><span class="block mb-2">Description</span><textarea class="form-textarea w-full" name="description"></textarea></label>
+      </div>
+      <div class="mt-6 bg-white dark:bg-background-dark rounded-xl border">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr><th>Account</th><th class="text-right">Debit</th><th class="text-right">Credit</th><th></th></tr>
+            </thead>
+            <tbody id="journal-lines">
+              <!-- initial single line -->
+            </tbody>
+          </table>
+        </div>
+        <div class="p-6 border-t flex gap-2">
+          <button hx-get="/journal/line" hx-target="#journal-lines" hx-swap="beforeend" type="button" class="px-4 py-2 bg-primary/10 text-primary rounded-lg">Add Line</button>
+          <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg">Post Journal</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

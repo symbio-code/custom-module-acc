@@ -1,0 +1,24 @@
+{% extends 'layouts/app.html' %}
+{% block title %}General Ledger{% endblock %}
+{% block content %}
+<div>
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold">General Ledger</h1>
+      <p class="text-sm text-slate-500">View and filter ledger entries</p>
+    </div>
+    <button class="px-4 h-10 rounded-lg">Export to CSV</button>
+  </div>
+  <div class="mt-6 rounded-xl border p-6">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+      <label class="flex flex-col"><span>Account</span><select class="form-select"><option>Cash</option></select></label>
+      <label class="flex flex-col"><span>Start Date</span><input type="date" class="form-input"/></label>
+      <label class="flex flex-col"><span>End Date</span><input type="date" class="form-input"/></label>
+      <button class="bg-primary text-white h-11 rounded-lg">Apply Filter</button>
+    </div>
+  </div>
+  <div class="mt-8">
+    {% include 'components/table.html' with cols=['Date','Reference','Description','Debit','Credit','Running Balance'] rows=rows %}
+  </div>
+</div>
+{% endblock %}

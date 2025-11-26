@@ -1,0 +1,11 @@
+<label class="flex flex-col">
+  <p class="text-sm font-medium pb-2">{{ label }}</p>
+  {% if type == 'textarea' %}
+    <textarea name="{{ name }}" class="form-textarea rounded-lg p-3" placeholder="{{ placeholder|default('') }}">{{ value|default('') }}</textarea>
+  {% elif type == 'select' %}
+    <select name="{{ name }}" class="form-select rounded-lg p-2">{% for opt in options %}<option value="{{ opt.value }}" {% if opt.value==value %}selected{% endif %}>{{ opt.label }}</option>{% endfor %}</select>
+  {% else %}
+    <input name="{{ name }}" type="{{ type|default('text') }}" value="{{ value|default('') }}" placeholder="{{ placeholder|default('') }}" class="form-input rounded-lg p-3" />
+  {% endif %}
+  {% if error %}<p class="text-red-600 text-xs mt-1">{{ error }}</p>{% endif %}
+</label>

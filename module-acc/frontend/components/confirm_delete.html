@@ -1,0 +1,12 @@
+<div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md">
+    <h3 class="text-lg font-semibold">Confirm Delete</h3>
+    <p class="mt-2 text-sm">Are you sure you want to delete account <strong>{{ account.code }} - {{ account.name }}</strong>? This action cannot be undone.</p>
+    <div class="mt-4 flex gap-2">
+      <form hx-post="/accounts/{{ account.id }}/delete" hx-swap="none">
+        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded">Yes, delete</button>
+      </form>
+      <button hx-get="/accounts" hx-target="#content" class="px-4 py-2 rounded border">Cancel</button>
+    </div>
+  </div>
+</div>
