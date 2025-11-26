@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlmodel import Session
 from app.database import get_session
 from fastapi import Request
@@ -16,10 +16,17 @@ templates = Jinja2Templates(directory="frontend")
 router = APIRouter(prefix="/journal")
 
 @router.post("/")
-def create_journal(payload: dict, db: Session = Depends(get_session), current_user: User = Depends(require_role('admin','accountant'))):
+def create_journal(payload: dict = Body(...), db: Session = Depends(get_session), current_user: User = Depends(require_role('admin','accountant'))):
     """Endpoint untuk membuat entri jurnal baru"""
+    if not payload or not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
     entry_data = payload.get("entry")
     lines = payload.get("lines", [])
+
+    if not entry_data:
+        raise HTTPException(status_code=400, detail="Missing 'entry' in payload")
+
     return create_journal_entry(db, entry_data, lines)
 
 @router.get("", response_class=None)

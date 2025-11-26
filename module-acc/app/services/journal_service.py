@@ -8,6 +8,9 @@ def create_journal_entry(db: Session, entry_data: dict, lines: list):
     if not lines or len(lines) == 0:
         raise HTTPException(status_code=400, detail="Journal must have at least one line")
 
+    if not entry_data or not isinstance(entry_data, dict):
+        raise HTTPException(status_code=400, detail="Missing or invalid 'entry' data")
+
     total_debit = 0
     total_credit = 0
 
@@ -24,19 +27,42 @@ def create_journal_entry(db: Session, entry_data: dict, lines: list):
     if round(total_debit, 2) != round(total_credit, 2):
         raise HTTPException(status_code=400, detail="Total debit and credit must be equal")
 
-    # Create header and lines in a single transaction
+    # Create header and lines in a single atomic transaction.
     je = JournalEntry(**entry_data)
-    db.add(je)
-    db.commit()
-    db.refresh(je)
+    try:
+        db.add(je)
+        # flush to generate `je.id` without committing; allows atomic commit below
+        db.flush()
 
-    for line in lines:
-        jl = JournalEntryLine(journal_entry_id=je.id, **line)
-        db.add(jl)
+        for line in lines:
+            # Basic per-line validation
+            if not line.get("account_code"):
+                raise HTTPException(status_code=400, detail="Each line must include an account_code")
+            try:
+                d = float(line.get("debit", 0) or 0)
+                c = float(line.get("credit", 0) or 0)
+            except Exception:
+                raise HTTPException(status_code=400, detail="Debit and credit must be numeric")
+            if d < 0 or c < 0:
+                raise HTTPException(status_code=400, detail="Debit and credit must be non-negative")
 
-    db.commit()
-    db.refresh(je)
-    return je
+            jl = JournalEntryLine(
+                journal_entry_id=je.id,
+                account_code=line.get("account_code"),
+                debit=d,
+                credit=c
+            )
+            db.add(jl)
+
+        db.commit()
+        db.refresh(je)
+        return je
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc))
 
 def get_journal_entry(db: Session, id: int):
     """Mengambil satu entri jurnal lengkap dengan line items"""
