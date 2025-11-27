@@ -8,7 +8,7 @@
       <h1 class="text-3xl font-bold">Income Statement (Profit & Loss)</h1>
     </div>
     <div class="flex gap-2">
-      <a href="/report/profit-loss/pdf?from_date=2025-01-01&to_date=2025-12-31" class="px-4 py-2 h-10 rounded-lg bg-blue-600 text-white text-center">Export PDF</a>
+      <a id="export-pl" href="#" target="_blank" class="px-4 py-2 h-10 rounded-lg bg-blue-600 text-white text-center">Export PDF</a>
     </div>
   </header>
 
@@ -55,5 +55,26 @@
   document.getElementById('pl-form').addEventListener('htmx:responseError', function(evt) {
     showToast('Failed to load report: ' + (evt.detail?.xhr?.statusText || 'Unknown error'));
   });
+
+  // Export PDF button wiring
+  (function(){
+    const form = document.querySelector('#pl-form');
+    const exportLink = document.getElementById('export-pl');
+    exportLink.addEventListener('click', function(e){
+      e.preventDefault();
+      if(!form) return window.alert('Form tidak ditemukan');
+      const fd = new FormData(form);
+      const params = new URLSearchParams();
+      for (const [k,v] of fd.entries()) {
+        if (v !== null && v !== '') params.append(k, v);
+      }
+      if (!params.get('from_date') || !params.get('to_date')) {
+        window.alert('Isi tanggal From dan To terlebih dahulu');
+        return;
+      }
+      const url = '/report/profit-loss/pdf?' + params.toString();
+      window.open(url, '_blank');
+    });
+  })();
 </script>
 {% endblock %}

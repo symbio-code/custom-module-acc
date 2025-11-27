@@ -8,7 +8,7 @@
       <p class="text-sm text-slate-500">Generate trial balance by fiscal period</p>
     </div>
     <div>
-      <a href="/report/trial-balance/pdf" class="px-4 py-2 rounded border">Export PDF</a>
+      <a id="export-tb" href="#" target="_blank" class="px-4 py-2 rounded border">Export PDF</a>
     </div>
   </div>
 
@@ -31,5 +31,27 @@
       <div class="px-4 py-8 text-center text-slate-500">Fill date range and click Run</div>
     </div>
   </div>
+
+<script>
+  (function(){
+    const form = document.querySelector('#tb-form');
+    const exportLink = document.getElementById('export-tb');
+    exportLink.addEventListener('click', function(e){
+      e.preventDefault();
+      if(!form) return window.alert('Form tidak ditemukan');
+      const fd = new FormData(form);
+      const params = new URLSearchParams();
+      for (const [k,v] of fd.entries()) {
+        if (v !== null && v !== '') params.append(k, v);
+      }
+      if (!params.get('from_date') || !params.get('to_date')) {
+        window.alert('Isi tanggal From dan To terlebih dahulu');
+        return;
+      }
+      const url = '/report/trial-balance/pdf?' + params.toString();
+      window.open(url, '_blank');
+    });
+  })();
+</script>
 </div>
 {% endblock %}

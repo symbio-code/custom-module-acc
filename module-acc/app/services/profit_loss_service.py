@@ -154,3 +154,30 @@ def get_profit_loss(
         'page': page,
         'page_size': page_size
     }
+
+
+def generate_profit_loss_pdf(db: Session, from_date: date, to_date: date) -> bytes:
+    """Generate Profit & Loss PDF bytes using WeasyPrint."""
+    from fastapi.templating import Jinja2Templates
+    from datetime import datetime
+    try:
+        from weasyprint import HTML
+    except Exception:
+        raise RuntimeError("WeasyPrint not available")
+
+    result = get_profit_loss(db, from_date, to_date, page=1, page_size=1000000)
+    templates = Jinja2Templates(directory="frontend/templates")
+    template = templates.env.get_template('reports/profit_loss_pdf.html')
+    context = {
+        'rows': result['rows'],
+        'total_revenue': result['total_revenue'],
+        'total_expense': result['total_expense'],
+        'net_profit': result['net_profit'],
+        'from_date': from_date.isoformat(),
+        'to_date': to_date.isoformat(),
+        'generated_at': datetime.utcnow().isoformat(),
+        'company_name': 'Company Name'
+    }
+    html_out = template.render(context)
+    pdf_bytes = HTML(string=html_out).write_pdf()
+    return pdf_bytes

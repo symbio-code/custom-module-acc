@@ -119,3 +119,33 @@ def get_trial_balance(db: Session, from_date: Optional[date], to_date: Optional[
         'total_credit': round(total_credit, 2),
         'balanced': round(total_debit,2) == round(total_credit,2)
     }
+
+
+def generate_trial_balance_pdf(db: Session, from_date: date, to_date: date, fiscal_year: Optional[int] = None) -> bytes:
+    """Generate PDF bytes for trial balance using WeasyPrint. Returns raw PDF bytes."""
+    # reuse existing get_trial_balance to compute rows
+    result = get_trial_balance(db, from_date, to_date, page=1, page_size=1000000, fiscal_year=fiscal_year)
+
+    # Render HTML via Jinja2 template located in frontend/templates/reports/
+    from fastapi.templating import Jinja2Templates
+    from datetime import datetime
+    try:
+        from weasyprint import HTML
+    except Exception:
+        raise RuntimeError("WeasyPrint not available")
+
+    templates = Jinja2Templates(directory="frontend/templates")
+    template = templates.env.get_template('reports/trial_balance_pdf.html')
+    context = {
+        'rows': result['rows'],
+        'total_debit': result['total_debit'],
+        'total_credit': result['total_credit'],
+        'balanced': result['balanced'],
+        'from_date': from_date.isoformat(),
+        'to_date': to_date.isoformat(),
+        'generated_at': datetime.utcnow().isoformat(),
+        'company_name': 'Company Name'
+    }
+    html_out = template.render(context)
+    pdf_bytes = HTML(string=html_out).write_pdf()
+    return pdf_bytes

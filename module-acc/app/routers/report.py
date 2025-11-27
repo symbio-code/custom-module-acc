@@ -6,8 +6,9 @@ from datetime import date
 from typing import Optional
 
 from app.database import get_session
-from app.services.trial_balance_service import get_trial_balance
-from app.services.profit_loss_service import get_profit_loss
+from app.services.trial_balance_service import get_trial_balance, generate_trial_balance_pdf
+from app.services.profit_loss_service import get_profit_loss, generate_profit_loss_pdf
+from app.services.balance_sheet_service import get_balance_sheet, generate_balance_sheet_pdf
 from app.security import require_role
 from app.models.user import User
 
@@ -85,15 +86,10 @@ def trial_balance_pdf(
     except Exception:
         return JSONResponse(status_code=400, content={"detail": "Invalid from_date/to_date format (expected YYYY-MM-DD)"})
 
-    result = get_trial_balance(db, from_date_obj, to_date_obj, page=1, page_size=1000000, fiscal_year=fiscal_year)
-
-    # Render HTML for PDF
-    template = templates.env.get_template('pages/reports/trial_balance_pdf.html')
-    html_out = template.render(rows=result['rows'], total_debit=result['total_debit'], total_credit=result['total_credit'], balanced=result['balanced'], from_date=from_date, to_date=to_date)
-
-    # Generate PDF
     try:
-        pdf_bytes = HTML(string=html_out).write_pdf()
+        pdf_bytes = generate_trial_balance_pdf(db, from_date_obj, to_date_obj, fiscal_year=fiscal_year)
+    except RuntimeError:
+        return JSONResponse(status_code=500, content={"detail": "WeasyPrint not available (missing dependency)"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": f"PDF generation failed: {str(e)}"})
 
@@ -170,22 +166,10 @@ def profit_loss_pdf(
     except Exception:
         return JSONResponse(status_code=400, content={"detail": "Invalid from_date/to_date format (expected YYYY-MM-DD)"})
 
-    result = get_profit_loss(db, from_date_obj, to_date_obj, page=1, page_size=1000000, include_zero=False)
-
-    # Render HTML for PDF
-    template = templates.env.get_template('pages/reports/profit_loss_pdf.html')
-    html_out = template.render(
-        rows=result['rows'],
-        total_revenue=result['total_revenue'],
-        total_expense=result['total_expense'],
-        net_profit=result['net_profit'],
-        from_date=from_date,
-        to_date=to_date
-    )
-
-    # Generate PDF
     try:
-        pdf_bytes = HTML(string=html_out).write_pdf()
+        pdf_bytes = generate_profit_loss_pdf(db, from_date_obj, to_date_obj)
+    except RuntimeError:
+        return JSONResponse(status_code=500, content={"detail": "WeasyPrint not available (missing dependency)"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": f"PDF generation failed: {str(e)}"})
 
@@ -193,4 +177,33 @@ def profit_loss_pdf(
     buf.seek(0)
     return StreamingResponse(buf, media_type='application/pdf', headers={
         'Content-Disposition': 'attachment; filename="profit_loss.pdf"'
+    })
+
+
+@router.get('/balance-sheet/pdf')
+def balance_sheet_pdf(
+    from_date: str = Query(...),
+    to_date: str = Query(...),
+    fiscal_year: Optional[int] = Query(None),
+    db: Session = Depends(get_session),
+    current_user: User = Depends(require_role('accountant','admin'))
+):
+    """Get Balance Sheet report as PDF using WeasyPrint."""
+    try:
+        from_date_obj = date.fromisoformat(from_date)
+        to_date_obj = date.fromisoformat(to_date)
+    except Exception:
+        return JSONResponse(status_code=400, content={"detail": "Invalid from_date/to_date format (expected YYYY-MM-DD)"})
+
+    try:
+        pdf_bytes = generate_balance_sheet_pdf(db, from_date_obj, to_date_obj, fiscal_year=fiscal_year)
+    except RuntimeError:
+        return JSONResponse(status_code=500, content={"detail": "WeasyPrint not available (missing dependency)"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": f"PDF generation failed: {str(e)}"})
+
+    buf = BytesIO(pdf_bytes)
+    buf.seek(0)
+    return StreamingResponse(buf, media_type='application/pdf', headers={
+        'Content-Disposition': 'attachment; filename="balance_sheet.pdf"'
     })

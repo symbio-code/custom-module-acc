@@ -3,11 +3,41 @@
 {% block content %}
 <div>
   <header class="mb-6">
-    <h1 class="text-3xl font-bold">Balance Sheet</h1>
-    <p class="text-sm text-slate-500">Generate a snapshot of your company’s financial health.</p>
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold">Balance Sheet</h1>
+        <p class="text-sm text-slate-500">Generate a snapshot of your company’s financial health.</p>
+      </div>
+      <div>
+        <a id="export-bs" href="#" target="_blank" class="px-4 py-2 rounded border">Export PDF</a>
+      </div>
+    </div>
   </header>
   <div class="rounded-xl border p-6 bg-white dark:bg-slate-900">
     <table class="w-full text-sm"><thead><tr><th>Account</th><th class="text-right">Dec 31, 2023</th><th class="text-right">Dec 31, 2022</th></tr></thead><tbody><!-- rows --></tbody></table>
   </div>
+
+<script>
+  (function(){
+    // You may need to update the form selector if you add a filter form
+    const form = document.querySelector('form');
+    const exportLink = document.getElementById('export-bs');
+    exportLink.addEventListener('click', function(e){
+      e.preventDefault();
+      if(!form) return window.alert('Form tidak ditemukan');
+      const fd = new FormData(form);
+      const params = new URLSearchParams();
+      for (const [k,v] of fd.entries()) {
+        if (v !== null && v !== '') params.append(k, v);
+      }
+      if (!params.get('from_date') || !params.get('to_date')) {
+        window.alert('Isi tanggal From dan To terlebih dahulu');
+        return;
+      }
+      const url = '/report/balance-sheet/pdf?' + params.toString();
+      window.open(url, '_blank');
+    });
+  })();
+</script>
 </div>
 {% endblock %}

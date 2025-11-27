@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Profit & Loss</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: Inter, Arial, sans-serif; color: #111 }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px }
+    th, td { border: 1px solid #e5e7eb; padding: 8px }
+    th { background: #f3f4f6; text-align: left }
+    .level-0 { padding-left: 0px }
+    .level-1 { padding-left: 20px }
+    .level-2 { padding-left: 40px }
+    .level-3 { padding-left: 60px }
+    .level-4 { padding-left: 80px }
+  </style>
+</head>
+<body class="p-6">
+  <header class="mb-4">
+    <div class="text-xl font-bold">{{ company_name }}</div>
+    <div class="text-lg">Profit & Loss</div>
+    <div class="text-sm text-gray-600">Period: {{ from_date }} — {{ to_date }}</div>
+    <div class="text-sm text-gray-500">Generated: {{ generated_at }}</div>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:120px">Code</th>
+        <th>Name</th>
+        <th class="text-right">Debit</th>
+        <th class="text-right">Credit</th>
+        <th class="text-right">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="font-mono">{{ row.code }}</td>
+        <td class="level-{{ row.level | default(0) }}">{{ row.name }}{% if row.is_group %} (Group){% endif %}</td>
+        <td class="text-right">{{ '%.2f'|format(row.period_debit) }}</td>
+        <td class="text-right">{{ '%.2f'|format(row.period_credit) }}</td>
+        <td class="text-right">{{ '%.2f'|format(row.amount) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr class="font-bold border-t">
+        <td colspan="2" class="text-right">Total Revenue</td>
+        <td colspan="1"></td>
+        <td class="text-right">{{ '%.2f'|format(total_revenue) }}</td>
+        <td class="text-right">{{ '%.2f'|format(total_revenue) }}</td>
+      </tr>
+      <tr class="font-bold">
+        <td colspan="2" class="text-right">Total Expense</td>
+        <td class="text-right">{{ '%.2f'|format(total_expense) }}</td>
+        <td colspan="1"></td>
+        <td class="text-right">{{ '%.2f'|format(total_expense) }}</td>
+      </tr>
+      <tr class="font-bold border-t">
+        <td colspan="4" class="text-right">Net Profit</td>
+        <td class="text-right {% if net_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">{{ '%.2f'|format(net_profit) }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+</html>
