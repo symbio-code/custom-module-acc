@@ -1,24 +1,140 @@
 {% extends 'layouts/app.html' %}
 {% block title %}General Ledger{% endblock %}
 {% block content %}
+<!-- Include toast component -->
+{% include 'components/toast.html' %}
+
 <div>
   <div class="flex items-center justify-between">
     <div>
       <h1 class="text-3xl font-bold">General Ledger</h1>
-      <p class="text-sm text-slate-500">View and filter ledger entries</p>
+      <p class="text-sm text-slate-500">View and filter ledger entries by account</p>
     </div>
-    <button class="px-4 h-10 rounded-lg">Export to CSV</button>
+    <button class="px-4 h-10 rounded-lg border">Export to CSV</button>
   </div>
   <div class="mt-6 rounded-xl border p-6">
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-      <label class="flex flex-col"><span>Account</span><select class="form-select"><option>Cash</option></select></label>
-      <label class="flex flex-col"><span>Start Date</span><input type="date" class="form-input"/></label>
-      <label class="flex flex-col"><span>End Date</span><input type="date" class="form-input"/></label>
-      <button class="bg-primary text-white h-11 rounded-lg">Apply Filter</button>
-    </div>
+    <form hx-get="/ledger/{account_code}/rows" 
+          hx-target="#ledger-table-body" 
+          hx-swap="innerHTML"
+          hx-on::htmx:beforeRequest="handleFormSubmit()"
+          hx-on::htmx:responseError="handleError(event)"
+          hx-on::htmx:sendError="handleSendError(event)"
+          id="ledger-filter-form"
+          class="grid md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+      <label class="flex flex-col">
+        <span class="text-sm font-medium">Account</span>
+        <select name="account_code" id="account-select" class="form-select mt-1" required onchange="updateFormAction()">
+          <option value="">-- Select Account --</option>
+          {% for acc in accounts %}
+          <option value="{{ acc.code }}">{{ acc.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="flex flex-col">
+        <span class="text-sm font-medium">Start Date</span>
+        <input type="date" name="from_date" class="form-input mt-1"/>
+      </label>
+      <label class="flex flex-col">
+        <span class="text-sm font-medium">End Date</span>
+        <input type="date" name="to_date" class="form-input mt-1"/>
+      </label>
+      <label class="flex flex-col">
+        <span class="text-sm font-medium">Opening Balance</span>
+        <input type="number" step="0.01" name="opening_balance" value="0.00" class="form-input mt-1"/>
+      </label>
+      <button type="submit" class="bg-primary text-white h-11 rounded-lg">Apply Filter</button>
+    </form>
   </div>
   <div class="mt-8">
-    {% include 'components/table.html' with cols=['Date','Reference','Description','Debit','Credit','Running Balance'] rows=rows %}
+    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-xl">
+      <table class="min-w-full divide-y bg-neutral-light dark:bg-neutral-dark">
+        <thead class="bg-background-light dark:bg-background-dark">
+          <tr>
+            <th class="py-3 px-3 text-left text-sm font-semibold">Date</th>
+            <th class="py-3 px-3 text-left text-sm font-semibold">Reference</th>
+            <th class="py-3 px-3 text-left text-sm font-semibold">Description</th>
+            <th class="py-3 px-3 text-right text-sm font-semibold">Debit</th>
+            <th class="py-3 px-3 text-right text-sm font-semibold">Credit</th>
+            <th class="py-3 px-3 text-right text-sm font-semibold">Running Balance</th>
+          </tr>
+        </thead>
+        <tbody id="ledger-table-body" class="divide-y">
+          <tr>
+            <td colspan="6" class="px-3 py-8 text-center text-sm text-slate-500">Select an account and click "Apply Filter" to view ledger entries</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+<script>
+  function updateFormAction() {
+    const accountCode = document.getElementById('account-select').value
+    const form = document.getElementById('ledger-filter-form')
+    if (accountCode) {
+      form.setAttribute('hx-get', `/ledger/${accountCode}/rows`)
+    } else {
+      showToast('Please select an account', 'warning', 2000)
+    }
+  }
+
+  function handleFormSubmit() {
+    const accountCode = document.getElementById('account-select').value
+    if (!accountCode) {
+      showToast('Please select an account first', 'warning', 2000)
+      return false // cancel HTMX request
+    }
+    // Show loading indicator
+    showToast('Loading ledger entries...', 'info', 1500)
+    return true
+  }
+
+  function handleError(event) {
+    const xhr = event.detail.xhr
+    const status = xhr.status
+    let errorMsg = 'Error loading ledger entries'
+
+    try {
+      const response = JSON.parse(xhr.responseText)
+      if (response.detail) {
+        errorMsg = response.detail
+      }
+    } catch (e) {
+      // Not JSON, use status text
+      if (status === 404) {
+        errorMsg = 'Account not found. Please select a valid account.'
+      } else if (status === 400) {
+        errorMsg = 'Invalid request. Check your date range and try again.'
+      } else if (status === 500) {
+        errorMsg = 'Server error. Please try again later.'
+      } else {
+        errorMsg = `Error (${status}): ${xhr.statusText}`
+      }
+    }
+
+    showToast(errorMsg, 'error', 4000)
+    
+    // Show error in table as fallback
+    document.getElementById('ledger-table-body').innerHTML = `
+      <tr>
+        <td colspan="6" class="px-3 py-4 text-center text-red-600">
+          ${errorMsg}
+        </td>
+      </tr>
+    `
+  }
+
+  function handleSendError(event) {
+    showToast('Network error. Unable to reach server.', 'error', 4000)
+  }
+
+  // Listen for HTMX response success
+  document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target && evt.detail.target.id === 'ledger-table-body') {
+      const accountCode = document.getElementById('account-select').value
+      showToast(`✓ Ledger loaded for ${accountCode}`, 'success', 2000)
+    }
+  })
+</script>
 {% endblock %}

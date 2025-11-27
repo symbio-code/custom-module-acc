@@ -1,0 +1,35 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Trial Balance{% endblock %}
+{% block content %}
+<div>
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold">Trial Balance</h1>
+      <p class="text-sm text-slate-500">Generate trial balance by fiscal period</p>
+    </div>
+    <div>
+      <a href="/report/trial-balance/pdf" class="px-4 py-2 rounded border">Export PDF</a>
+    </div>
+  </div>
+
+  <div class="mt-6 rounded-xl border p-6">
+    <form id="tb-form" hx-get="/report/trial-balance/html" hx-target="#tb-rows" hx-swap="innerHTML">
+      <div class="grid md:grid-cols-4 gap-4 items-end">
+        <label class="flex flex-col"><span>From</span><input type="date" name="from_date" class="form-input" required/></label>
+        <label class="flex flex-col"><span>To</span><input type="date" name="to_date" class="form-input" required/></label>
+        <label class="flex flex-col"><span>Fiscal Year (optional)</span><input name="fiscal_year" class="form-input"/></label>
+        <label class="flex flex-col"><span>Include Zero Balances</span><select name="include_zero" class="form-select"><option value="false">No</option><option value="true">Yes</option></select></label>
+        <div>
+          <button type="submit" class="bg-primary text-white px-4 py-2 rounded">Run</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="mt-6">
+    <div id="tb-rows">
+      <div class="px-4 py-8 text-center text-slate-500">Fill date range and click Run</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

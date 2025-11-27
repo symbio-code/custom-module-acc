@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Trial Balance</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #111 }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px }
+    th, td { border: 1px solid #ddd; padding: 8px }
+    th { background: #f4f4f4; text-align: left }
+    .text-right { text-align: right }
+    .muted { color: #666 }
+    .balanced { color: green }
+    .not-balanced { color: red }
+    /* level padding classes to avoid inline Jinja in style attributes
+       levels assumed 0..4 per accounting plan */
+    .level-0 { padding-left: 0px }
+    .level-1 { padding-left: 10px }
+    .level-2 { padding-left: 20px }
+    .level-3 { padding-left: 30px }
+    .level-4 { padding-left: 40px }
+  </style>
+</head>
+<body>
+  <h1>Trial Balance</h1>
+  <p class="muted">Period: {{ from_date }} — {{ to_date }}</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Name</th>
+        <th class="text-right">Opening</th>
+        <th class="text-right">Debit</th>
+        <th class="text-right">Credit</th>
+        <th class="text-right">Closing</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.code }}</td>
+        <td class="level-{{ r.level | default(0) }}">{{ r.name }}{% if r.is_group %} (Group){% endif %}</td>
+        <td class="text-right">{{ '{:.2f}'.format(r.opening_balance) }}</td>
+        <td class="text-right">{{ '{:.2f}'.format(r.period_debit) }}</td>
+        <td class="text-right">{{ '{:.2f}'.format(r.period_credit) }}</td>
+        <td class="text-right">{{ '{:.2f}'.format(r.closing_balance) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" class="text-right">Totals:</td>
+        <td class="text-right">{{ '{:.2f}'.format(total_debit) }}</td>
+        <td class="text-right">{{ '{:.2f}'.format(total_credit) }}</td>
+        <td class="text-right">{% if balanced %}<span class="balanced">Balanced</span>{% else %}<span class="not-balanced">Not Balanced</span>{% endif %}</td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+</html>

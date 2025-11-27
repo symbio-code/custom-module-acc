@@ -1,19 +1,59 @@
 {% extends 'layouts/app.html' %}
-{% block title %}Income Statement{% endblock %}
+{% block title %}Income Statement (Profit & Loss){% endblock %}
 {% block content %}
 <div>
   <header class="mb-6 flex items-center justify-between">
     <div>
       <p class="text-sm text-slate-500">Reports / Financial</p>
-      <h1 class="text-3xl font-bold">Income Statement</h1>
+      <h1 class="text-3xl font-bold">Income Statement (Profit & Loss)</h1>
     </div>
     <div class="flex gap-2">
-      <button class="px-4 h-10 rounded-lg">Export</button>
-      <button class="px-4 h-10 rounded-lg">Print</button>
+      <a href="/report/profit-loss/pdf?from_date=2025-01-01&to_date=2025-12-31" class="px-4 py-2 h-10 rounded-lg bg-blue-600 text-white text-center">Export PDF</a>
     </div>
   </header>
+
+  <!-- Filter Form -->
+  <div class="mb-6 rounded-xl border p-4 bg-white dark:bg-slate-900">
+    <form id="pl-form" hx-get="/report/profit-loss/html" hx-target="#pl-rows" hx-swap="innerHTML" class="flex gap-4 items-end">
+      <div class="flex-1">
+        <label class="block text-sm font-medium mb-1">From Date</label>
+        <input type="date" name="from_date" required class="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600">
+      </div>
+      <div class="flex-1">
+        <label class="block text-sm font-medium mb-1">To Date</label>
+        <input type="date" name="to_date" required class="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600">
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" name="include_zero" value="true" class="rounded">
+          Include Zero Balances
+        </label>
+      </div>
+      <button type="submit" class="px-6 py-2 h-10 bg-slate-900 text-white rounded-lg hover:bg-slate-800">Filter</button>
+    </form>
+  </div>
+
+  <!-- Report Table -->
   <div class="rounded-xl border p-4 bg-white dark:bg-slate-900">
-    <table class="w-full text-sm"><thead><tr><th>Account</th><th class="text-right">Amount (USD)</th></tr></thead><tbody><!-- report rows --></tbody></table>
+    <div id="pl-rows" class="text-sm text-slate-500">
+      <p>Select date range and click Filter to view report.</p>
+    </div>
   </div>
 </div>
+
+<!-- Toast for errors -->
+<div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-3 rounded-lg bg-red-600 text-white text-sm shadow-lg"></div>
+
+<script>
+  function showToast(message, type = 'error') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white text-sm shadow-lg ${type === 'error' ? 'bg-red-600' : 'bg-green-600'}`;
+    setTimeout(() => toast.classList.add('hidden'), 4000);
+  }
+
+  document.getElementById('pl-form').addEventListener('htmx:responseError', function(evt) {
+    showToast('Failed to load report: ' + (evt.detail?.xhr?.statusText || 'Unknown error'));
+  });
+</script>
 {% endblock %}

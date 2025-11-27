@@ -1,0 +1,23 @@
+{% if rows %}
+  {% for row in rows %}
+  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+    <td class="px-3 py-4 text-sm">{{ row.date }}</td>
+    <td class="px-3 py-4 text-sm">{{ row.reference }}</td>
+    <td class="px-3 py-4 text-sm">{{ row.description }}</td>
+    <td class="px-3 py-4 text-sm text-right">{{ "%.2f"|format(row.debit) }}</td>
+    <td class="px-3 py-4 text-sm text-right">{{ "%.2f"|format(row.credit) }}</td>
+    <td class="px-3 py-4 text-sm text-right font-semibold {% if row.running_balance < 0 %}text-red-600{% else %}text-green-600{% endif %}">{{ "%.2f"|format(row.running_balance) }}</td>
+  </tr>
+  {% endfor %}
+  <tr class="bg-slate-100 dark:bg-slate-800 font-semibold border-t-2">
+    <td colspan="5" class="px-3 py-4 text-sm text-right">Closing Balance:</td>
+    <td class="px-3 py-4 text-sm text-right {% if closing_balance < 0 %}text-red-600{% else %}text-green-600{% endif %}">{{ "%.2f"|format(closing_balance) }}</td>
+  </tr>
+{% else %}
+  <tr>
+    <td colspan="6" class="px-3 py-8 text-sm text-center text-slate-500">
+      <p class="mb-2">No ledger entries found for this account</p>
+      <p class="text-xs text-slate-400">Try adjusting your date range or opening balance</p>
+    </td>
+  </tr>
+{% endif %}

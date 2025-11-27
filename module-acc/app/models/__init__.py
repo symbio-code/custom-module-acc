@@ -2,18 +2,15 @@ from .user import User
 from .company import Company
 from .account import Account
 from .accounting_period import AccountingPeriod
-from .opening_balance import OpeningBalance
-from .journal_entry import JournalEntry
-from .journal_line import JournalLine
-from .gl_entry import GLEntry
+from .user import User
+from .account import Account
+from .journal import JournalEntry, JournalEntryLine
+from .ledger import LedgerEntry
 
 __all__ = [
     "User",
-    "Company",
     "Account",
-    "AccountingPeriod",
-    "OpeningBalance",
     "JournalEntry",
-    "JournalLine",
-    "GLEntry",
+    "JournalEntryLine",
+    "LedgerEntry",
 ]
