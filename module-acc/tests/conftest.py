@@ -25,81 +25,113 @@ from app.database import get_session as original_get_session
 
 
 
-def _truncate_all_tables(engine):
-    """Truncate all tables in the database (for per-test cleanup when using Postgres)."""
+import uuid
+from sqlalchemy import text, event
+from sqlalchemy.pool import NullPool
+
+def _get_test_schema_name():
+    """Generate a unique schema name for this test (per-test isolation)."""
+    return f"test_{uuid.uuid4().hex[:12]}"
+
+
+def _create_test_schema(engine, schema_name: str):
+    """Create a test schema and all tables within it.
+    
+    Uses explicit schema qualification to ensure tables are created in the
+    test schema, not the public schema.
+    """
+    # Create schema
     with engine.connect() as conn:
-        # Disable foreign key constraints temporarily
+        conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+        conn.commit()
+    
+    # Set the schema on all tables temporarily for creation
+    for table in SQLModel.metadata.tables.values():
+        table.schema = schema_name
+    
+    try:
+        # Create all tables in the test schema
+        SQLModel.metadata.create_all(engine)
+    finally:
+        # Reset schemas back to None (public)
+        for table in SQLModel.metadata.tables.values():
+            table.schema = None
+
+
+def _drop_test_schema(engine, schema_name: str):
+    """Drop the test schema and all tables within it."""
+    with engine.connect() as conn:
         try:
-            conn.execute("SET session_replication_role = 'replica';")
-        except Exception:
-            pass  # SQLite does not support this; it will just fail silently
-        
-        # Truncate all tables
-        for table in reversed(SQLModel.metadata.sorted_tables):
-            try:
-                conn.execute(f"TRUNCATE TABLE {table.name} CASCADE;")
-            except Exception:
-                # Fallback to DELETE for SQLite compatibility
-                try:
-                    conn.execute(f"DELETE FROM {table.name};")
-                except Exception:
-                    pass
-        
-        # Re-enable foreign key constraints
-        try:
-            conn.execute("SET session_replication_role = 'origin';")
+            conn.execute(text(f"DROP SCHEMA {schema_name} CASCADE"))
+            conn.commit()
         except Exception:
             pass
-        
-        conn.commit()
 
 
 @pytest.fixture()
 def db_session(tmp_path):
-    """Create a fresh SQLite DB file for each test and return a Session.
+    """Create a test Session with per-test isolation.
 
-    This gives maximal isolation: each test gets its own database file,
-    tables are created and required seed data inserted. The TestClient is
-    overridden to use the same `Session` for requests.
-    
-    NOTE: TEST_USE_POSTGRES=1 is NOT recommended for automated tests due to
-    transaction isolation challenges. Use only for manual integration testing
-    against a real Postgres instance (e.g., for dev or QA). Automated tests
-    should use the default SQLite per-test approach for full isolation.
+    For SQLite: creates a fresh temp file per test (full isolation).
+    For Postgres (TEST_USE_POSTGRES=1): creates a fresh schema per test with all tables,
+    seed data, and transaction handling. This ensures complete isolation like SQLite.
     """
     load_dotenv(dotenv_path=ROOT / ".env")
     use_postgres = os.getenv("TEST_USE_POSTGRES", "0") == "1"
     env_db = os.getenv("DATABASE_URL")
     
     if use_postgres and env_db and not env_db.count("${{") > 0:
-        # Only use Postgres if explicitly enabled AND env_db has no placeholders
-        # (to prevent misconfiguration against unresolved Railway template strings)
+        # Postgres with per-test schema isolation
         database_url = env_db
-        engine = create_engine(database_url)
         
-        # Create all tables if needed
-        SQLModel.metadata.create_all(engine)
+        # Generate unique schema name for this test
+        schema_name = _get_test_schema_name()
         
-        # For Postgres tests, truncate all data at start of each test
-        # (transaction rollback approach does not fully isolate seed data)
-        _truncate_all_tables(engine)
+        # Create engine with NullPool to avoid connection pooling issues
+        # Each connection is fresh and not reused, ensuring no cross-test schema contamination
+        engine = create_engine(database_url, echo=False, poolclass=NullPool)
         
-        # Seed base data
-        with Session(engine) as session:
-            _seed_base_data(session)
-        
-        # Provide a Session for the test
-        session = Session(engine)
         try:
-            yield session
+            # Create test schema with all tables
+            _create_test_schema(engine, schema_name)
+            
+            # Register event listener AFTER creating schema, to ensure it's set on every connection
+            def set_search_path(dbapi_conn, connection_record):
+                with dbapi_conn.cursor() as cursor:
+                    cursor.execute(f"SET search_path TO {schema_name}, public")
+            
+            listener = event.listens_for(engine, "connect")(set_search_path)
+            
+            # Seed base data in test schema
+            with Session(engine) as session:
+                _seed_base_data(session)
+            
+            # Provide a Session for the test
+            session = Session(engine)
+            
+            try:
+                yield session
+            finally:
+                session.close()
         finally:
-            session.close()
+            # Clean up: remove listener, drop schema, dispose engine
+            try:
+                event.remove(engine, "connect", set_search_path)
+            except Exception:
+                pass
+            
+            # Drop schema (will also drop all tables within it)
+            try:
+                _drop_test_schema(engine, schema_name)
+            except Exception as e:
+                print(f"Warning: Failed to drop test schema {schema_name}: {e}")
+            
             try:
                 engine.dispose()
             except Exception:
                 pass
     else:
-        # SQLite: use per-test temp file with full isolation (RECOMMENDED)
+        # SQLite: use per-test temp file (RECOMMENDED for CI/automated tests)
         db_file = tmp_path / "test.db"
         database_url = f"sqlite:///{db_file}"
         engine = create_engine(database_url, connect_args={"check_same_thread": False})
