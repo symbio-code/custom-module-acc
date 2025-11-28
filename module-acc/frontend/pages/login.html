@@ -17,7 +17,7 @@
         <p class="text-slate-600">Log in to your account to continue.</p>
       </div>
       <form method="post" action="/auth/login" hx-post="/auth/login" hx-swap="none">
-        {% include 'components/form_field.html' with {'label':'Password','name':'password','type':'password','placeholder':'Enter your password'} %}
+        {% set label='Password' %}{% set name='password' %}{% set type='password' %}{% set placeholder='Enter your password' %}{% include 'components/form_field.html' %}
         <div class="mt-4">
           <button class="w-full bg-primary text-white rounded-lg h-12">Login</button>
         </div>

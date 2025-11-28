@@ -7,8 +7,8 @@
   <form id="journal-form">
       <div id="form-error" class="mb-4 text-red-600" style="display:none"></div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {% include 'components/form_field.html' with {'label':'Date','name':'date','type':'date'} %}
-        {% include 'components/form_field.html' with {'label':'Reference No.','name':'ref'} %}
+        {% set label='Date' %}{% set name='date' %}{% set type='date' %}{% include 'components/form_field.html' %}
+        {% set label='Reference No.' %}{% set name='ref' %}{% include 'components/form_field.html' %}
         <label class="md:col-span-3"><span class="block mb-2">Description</span><textarea class="form-textarea w-full" name="description"></textarea></label>
       </div>
       <div class="mt-6 bg-white dark:bg-background-dark rounded-xl border">

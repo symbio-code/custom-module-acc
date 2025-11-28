@@ -10,6 +10,7 @@ from app.routers.journal import router as journal_router
 from app.routers.ledger import router as ledger_router
 from app.routers.auth import router as auth_router
 from app.routers.frontend_auth import router as frontend_router
+from app.routers.report import router as report_router
 
 
 app = FastAPI()
@@ -47,6 +48,7 @@ app.include_router(journal_router)
 app.include_router(ledger_router)
 app.include_router(auth_router)
 app.include_router(frontend_router)
+app.include_router(report_router)
 
 # Serve static files from frontend/static if the folder exists
 if os.path.isdir("frontend/static"):

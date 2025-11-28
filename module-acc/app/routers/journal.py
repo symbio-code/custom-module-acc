@@ -10,6 +10,7 @@ from app.security import require_role
 from app.models.user import User
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from datetime import date as _date
 
 templates = Jinja2Templates(directory="frontend")
 
@@ -26,6 +27,14 @@ def create_journal(payload: dict = Body(...), db: Session = Depends(get_session)
 
     if not entry_data:
         raise HTTPException(status_code=400, detail="Missing 'entry' in payload")
+
+    # Accept ISO date strings from API clients and convert to Python date
+    try:
+        d = entry_data.get('date')
+        if isinstance(d, str):
+            entry_data['date'] = _date.fromisoformat(d)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid date format for entry.date; expected YYYY-MM-DD")
 
     return create_journal_entry(db, entry_data, lines)
 

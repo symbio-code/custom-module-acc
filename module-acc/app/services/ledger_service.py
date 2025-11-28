@@ -40,15 +40,15 @@ def post_journal_entry(db: Session, journal_id: int):
     je.posted = True
     db.commit()
 
-    return {\"status\": \"posted\", \"journal_id\": journal_id}
+    return {"status": "posted", "journal_id": journal_id}
 
 def validate_account_code(db: Session, account_code: str) -> Account:
-    \"\"\"Validasi account_code exists di Chart of Accounts\"\"\"
+    """Validasi account_code exists di Chart of Accounts"""
     acc = db.exec(
         select(Account).where(Account.code == account_code)
     ).first()
     if not acc:
-        raise HTTPException(status_code=404, detail=f\"Account {account_code} not found in Chart of Accounts\")
+           raise HTTPException(status_code=404, detail=f"Account {account_code} not found in Chart of Accounts")
     return acc
 
 def get_ledger_for_account(
@@ -60,7 +60,7 @@ def get_ledger_for_account(
     limit: int = 100,
     offset: int = 0
 ) -> dict:
-    \"\"\"Mengambil ledger untuk akun tertentu dengan running balance\"\"\"
+    """Mengambil ledger untuk akun tertentu dengan running balance"""
     # Validasi account exists
     validate_account_code(db, account_code)
 
@@ -83,12 +83,12 @@ def get_ledger_for_account(
     for row in rows:
         running_balance += row.debit - row.credit
         ledger_with_balance.append({
-            \"date\": row.date.isoformat() if row.date else \"\",
-            \"description\": row.description or \"\",
-            \"reference\": f\"LE-{row.id:05d}\",
-            \"debit\": round(row.debit, 2),
-            \"credit\": round(row.credit, 2),
-            \"running_balance\": round(running_balance, 2)
+                "date": row.date.isoformat() if row.date else "",
+                "description": row.description or "",
+                "reference": f"LE-{row.id:05d}",
+                "debit": round(row.debit, 2),
+                "credit": round(row.credit, 2),
+                "running_balance": round(running_balance, 2)
         })
     
     # Total count (untuk pagination)
@@ -100,17 +100,17 @@ def get_ledger_for_account(
     total_count = len(db.exec(total_query).all())
 
     return {
-        \"account_code\": account_code,
-        \"rows\": ledger_with_balance,
-        \"total\": total_count,
-        \"opening_balance\": opening_balance,
-        \"closing_balance\": running_balance,
-        \"page\": (offset // limit) + 1 if limit > 0 else 1,
-        \"page_size\": limit
+        "account_code": account_code,
+        "rows": ledger_with_balance,
+        "total": total_count,
+        "opening_balance": opening_balance,
+        "closing_balance": running_balance,
+        "page": (offset // limit) + 1 if limit > 0 else 1,
+        "page_size": limit
     }
 
 def get_ledger_for_account_simple(db: Session, account_code: str):
-    \"\"\"Mengambil ledger untuk akun tertentu (simple, tanpa running balance)\"\"\"
+    """Mengambil ledger untuk akun tertentu (simple, tanpa running balance)"""
     rows = db.exec(
         select(LedgerEntry)
         .where(LedgerEntry.account_code == account_code)
