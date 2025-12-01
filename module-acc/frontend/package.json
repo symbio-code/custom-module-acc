@@ -11,6 +11,9 @@
     "testEnvironment": "jsdom",
     "testMatch": [
       "**/tests/jest/**/*.test.js"
+    ],
+    "setupFiles": [
+      "<rootDir>/tests/jest/setup.js"
     ]
   },
   "devDependencies": {

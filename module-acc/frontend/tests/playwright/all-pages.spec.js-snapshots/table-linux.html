@@ -1,0 +1,15 @@
+
+        <thead>
+          <tr><th>Name</th><th>Value</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Item 1</td>
+            <td>100</td>
+            <td>
+              <button hx-get="/items/1/edit" hx-target="#modal">Edit</button>
+              <button hx-delete="/items/1" hx-confirm="Delete?">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      

@@ -1,0 +1,117 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Account Components account edit button triggers modal 1`] = `"<form id="editForm">Edit Account</form>"`;
+
+exports[`Account Components account form with HTMX behavior 1`] = `
+"
+        <input id="code" type="text" placeholder="Account Code">
+        <input id="name" type="text" placeholder="Account Name">
+        <select id="type">
+          <option value="asset">Asset</option>
+          <option value="liability">Liability</option>
+        </select>
+        <button type="submit">Create</button>
+      "
+`;
+
+exports[`General Components confirm delete component actions 1`] = `
+"
+        <p>Delete this account?</p>
+        <button id="confirmBtn">Yes</button>
+        <button id="cancelBtn">No</button>
+      "
+`;
+
+exports[`General Components form field component with validation 1`] = `
+"
+        <label>Username:</label>
+        <input type="text" id="username" required="" pattern="[a-z0-9]{3,}">
+        <span id="error" style="display:none;">Min 3 characters</span>
+      "
+`;
+
+exports[`General Components modal component visibility toggle 1`] = `
+"
+        <p>Modal Content</p>
+        <button onclick="closeModal()">Close</button>
+      "
+`;
+
+exports[`General Components pagination component navigation 1`] = `
+"
+        <a href="?page=1">Prev</a>
+        <span>Page 2</span>
+        <a href="?page=3">Next</a>
+      "
+`;
+
+exports[`General Components stats cards display values 1`] = `
+"
+        <div class="card"><h3>Assets</h3><p>50000</p></div>
+        <div class="card"><h3>Liabilities</h3><p>20000</p></div>
+      "
+`;
+
+exports[`General Components table component with HTMX actions 1`] = `
+"
+        <tbody>
+          <tr>
+            <td>Item 1</td>
+            <td>
+              <button id="editBtn">Edit</button>
+              <button id="deleteBtn">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      "
+`;
+
+exports[`Journal Components journal entry form with line items 1`] = `
+"
+        <input type="date" id="date" value="2025-01-01">
+        <textarea id="description">Opening entry</textarea>
+        <table id="linesTable">
+          <tbody>
+            <tr>
+              <td><input class="account" value="100"></td>
+              <td><input class="debit" value="1000"></td>
+              <td><input class="credit" value="0"></td>
+            </tr>
+            <tr>
+              <td><input class="account" value="200"></td>
+              <td><input class="debit" value="0"></td>
+              <td><input class="credit" value="1000"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="submit">Save</button>
+      "
+`;
+
+exports[`Login Component login form renders and submits 1`] = `"<div id="logged-in">Welcome</div>"`;
+
+exports[`Report Components balance sheet sections 1`] = `
+"
+        <section><h3>Assets</h3><p>100000</p></section>
+        <section><h3>Liabilities</h3><p>50000</p></section>
+        <section><h3>Equity</h3><p>50000</p></section>
+      "
+`;
+
+exports[`Report Components profit loss report calculations 1`] = `
+"
+        <p>Revenue: <span id="revenue">10000</span></p>
+        <p>Expenses: <span id="expenses">3000</span></p>
+        <p>Net: <span id="net">7000</span></p>
+      "
+`;
+
+exports[`Report Components trial balance table rendering 1`] = `
+"
+        <thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead>
+        <tbody>
+          <tr><td>Cash</td><td>5000</td><td>0</td></tr>
+          <tr><td>Income</td><td>0</td><td>5000</td></tr>
+        </tbody>
+      "
+`;
