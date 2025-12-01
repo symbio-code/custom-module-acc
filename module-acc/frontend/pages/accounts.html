@@ -13,7 +13,9 @@
   </div>
 
   <div id="accounts-list">
-    {% include 'components/table.html' with {'cols': ['Code','Name','Type','Level','Is Group','Active'], 'rows': table_rows} %}
+    {% set cols = ['Code','Name','Type','Level','Is Group','Active'] %}
+    {% set rows = table_rows %}
+    {% include 'components/table.html' %}
   </div>
 </div>
 {% endblock %}

@@ -90,6 +90,12 @@ def db_session(tmp_path):
         # Create engine with NullPool to avoid connection pooling issues
         # Each connection is fresh and not reused, ensuring no cross-test schema contamination
         engine = create_engine(database_url, echo=False, poolclass=NullPool)
+        # Ensure the application's module-level engine is replaced with our test engine
+        try:
+            import app.database as app_database
+            app_database.engine = engine
+        except Exception:
+            pass
         
         try:
             # Create test schema with all tables
@@ -137,6 +143,12 @@ def db_session(tmp_path):
         engine = create_engine(database_url, connect_args={"check_same_thread": False})
         
         # Create all tables
+        # Ensure the application's module-level engine is replaced with our test engine
+        try:
+            import app.database as app_database
+            app_database.engine = engine
+        except Exception:
+            pass
         SQLModel.metadata.create_all(engine)
         
         # Seed base data
@@ -157,6 +169,8 @@ def db_session(tmp_path):
 
 def _seed_base_data(session: Session):
     """Seed common test data into a session."""
+    from app.utils.security import hash_password
+    
     accounts = [
         Account(code="100", name="Cash", account_type="asset", level=0, is_group=False),
         Account(code="200", name="Accounts Payable", account_type="liability", level=0, is_group=False),
@@ -171,15 +185,15 @@ def _seed_base_data(session: Session):
 
     admin = session.exec(select(User).where(User.username == 'admin')).first()
     if not admin:
-        admin = User(username="admin", password_hash="x", role=UserRole.admin)
+        admin = User(username="admin", password_hash=hash_password("admin"), role=UserRole.admin)
         session.add(admin)
     acct = session.exec(select(User).where(User.username == 'acct')).first()
     if not acct:
-        acct = User(username="acct", password_hash="x", role=UserRole.accountant)
+        acct = User(username="acct", password_hash=hash_password("acct"), role=UserRole.accountant)
         session.add(acct)
     viewer = session.exec(select(User).where(User.username == 'viewer')).first()
     if not viewer:
-        viewer = User(username="viewer", password_hash="x", role=UserRole.viewer)
+        viewer = User(username="viewer", password_hash=hash_password("viewer"), role=UserRole.viewer)
         session.add(viewer)
 
     session.commit()
@@ -227,3 +241,142 @@ def viewer_headers(db_session):
     u = db_session.exec(select(User).where(User.username == 'viewer')).first()
     token = create_access_token(u)
     return {"Authorization": f"Bearer {token}"}
+
+
+# ============================================================================
+# AUTH-SPECIFIC FIXTURES FOR TESTING
+# ============================================================================
+
+@pytest.fixture
+def admin_user(db_session) -> User:
+    """Get the seeded admin user."""
+    u = db_session.exec(select(User).where(User.username == 'admin')).first()
+    assert u is not None, "Admin user not found in database"
+    return u
+
+
+@pytest.fixture
+def accountant_user(db_session) -> User:
+    """Get the seeded accountant user."""
+    u = db_session.exec(select(User).where(User.username == 'acct')).first()
+    assert u is not None, "Accountant user not found in database"
+    return u
+
+
+@pytest.fixture
+def viewer_user(db_session) -> User:
+    """Get the seeded viewer user."""
+    u = db_session.exec(select(User).where(User.username == 'viewer')).first()
+    assert u is not None, "Viewer user not found in database"
+    return u
+
+
+@pytest.fixture
+def admin_token(admin_user: User) -> str:
+    """Generate a valid JWT token for admin user."""
+    return create_access_token(admin_user)
+
+
+@pytest.fixture
+def accountant_token(accountant_user: User) -> str:
+    """Generate a valid JWT token for accountant user."""
+    return create_access_token(accountant_user)
+
+
+@pytest.fixture
+def viewer_token(viewer_user: User) -> str:
+    """Generate a valid JWT token for viewer user."""
+    return create_access_token(viewer_user)
+
+
+@pytest.fixture
+def admin_auth_headers(admin_token: str) -> dict:
+    """Authorization headers with admin token."""
+    return {"Authorization": f"Bearer {admin_token}"}
+
+
+@pytest.fixture
+def accountant_auth_headers(accountant_token: str) -> dict:
+    """Authorization headers with accountant token."""
+    return {"Authorization": f"Bearer {accountant_token}"}
+
+
+@pytest.fixture
+def viewer_auth_headers(viewer_token: str) -> dict:
+    """Authorization headers with viewer token."""
+    return {"Authorization": f"Bearer {viewer_token}"}
+
+
+@pytest.fixture
+def htmx_headers() -> dict:
+    """HTMX request headers."""
+    return {"hx-request": "true"}
+
+
+@pytest.fixture
+def admin_htmx_headers(admin_token: str) -> dict:
+    """HTMX request headers with admin authorization."""
+    return {
+        "hx-request": "true",
+        "Authorization": f"Bearer {admin_token}"
+    }
+
+
+@pytest.fixture
+def accountant_htmx_headers(accountant_token: str) -> dict:
+    """HTMX request headers with accountant authorization."""
+    return {
+        "hx-request": "true",
+        "Authorization": f"Bearer {accountant_token}"
+    }
+
+
+@pytest.fixture
+def viewer_htmx_headers(viewer_token: str) -> dict:
+    """HTMX request headers with viewer authorization."""
+    return {
+        "hx-request": "true",
+        "Authorization": f"Bearer {viewer_token}"
+    }
+
+
+# ============================================================================
+# HELPER FUNCTIONS FOR AUTH TESTING
+# ============================================================================
+
+def create_test_user(
+    db_session: Session,
+    username: str,
+    password: str,
+    role: UserRole = UserRole.viewer
+) -> User:
+    """Create a test user with hashed password.
+    
+    Args:
+        db_session: Database session
+        username: Username for the new user
+        password: Plaintext password (will be hashed)
+        role: User role (default: viewer)
+    
+    Returns:
+        Created User object
+    """
+    from app.utils.security import hash_password
+    
+    user = User(
+        username=username,
+        password_hash=hash_password(password),
+        role=role
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def create_user_helper(db_session):
+    """Fixture to create test users during a test."""
+    return lambda username, password, role=UserRole.viewer: create_test_user(
+        db_session, username, password, role
+    )

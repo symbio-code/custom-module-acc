@@ -17,7 +17,7 @@ def login_get(request: Request):
 
 
 @router.post("/login")
-def login_post(request: Request, response: Response, password: str = None, db: Session = Depends(get_session)):
+def login_post(request: Request, response: Response, password: str = None, username: str = None, db: Session = Depends(get_session)):
     """Handle form POST from login page. Field name expected: 'password'.
 
     On success set a session cookie and redirect to /dashboard.
@@ -40,6 +40,12 @@ def login_post(request: Request, response: Response, password: str = None, db: S
                 if asyncio.iscoroutine(form):
                     form = asyncio.get_event_loop().run_until_complete(form)
             password = (form.get('password') if form else None)
+        if username is None:
+            # extract username from form if present
+            if 'form' in locals() and form:
+                username = form.get('username')
+            else:
+                username = request.query_params.get('username')
     except Exception:
         password = None
 
@@ -47,7 +53,20 @@ def login_post(request: Request, response: Response, password: str = None, db: S
         # re-render login with message
         return templates.TemplateResponse("pages/login.html", {"request": request, "error": "Password required"}, status_code=400)
 
-    user, token = login_user(db, password)
+    try:
+        user, token = login_user(db, password, username=username)
+    except Exception as exc:
+        # On any auth error, re-render login with the error message
+        msg = str(exc)
+        # If it's an HTTPException, prefer its detail
+        try:
+            from fastapi import HTTPException
+            if isinstance(exc, HTTPException):
+                msg = exc.detail
+        except Exception:
+            pass
+        return templates.TemplateResponse("pages/login.html", {"request": request, "error": msg}, status_code=getattr(exc, 'status_code', 400))
+
     response.set_cookie("access_token", token, httponly=True, samesite="lax")
 
     # If this was an HTMX request, instruct client to redirect

@@ -1,0 +1,32 @@
+name: Frontend Tests (Playwright + Jest)
+
+on:
+  push:
+    branches: [ main, feature/** ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend dev dependencies
+        working-directory: ./module-acc/frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Run Jest tests
+        working-directory: ./module-acc/frontend
+        run: npm run test:jest
+
+      - name: Run Playwright tests
+        working-directory: ./module-acc/frontend
+        run: npm run test:playwright -- --workers=1
