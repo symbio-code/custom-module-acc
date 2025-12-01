@@ -22,14 +22,21 @@ def init_superuser(db: Session, password: str):
 
 def authenticate(db: Session, password: str):
     """Authenticate user by password. (Simple single-user app pattern.)"""
-    user = db.exec(select(User)).first()
-    if not user:
+    # Try to find a user whose password matches the provided password.
+    users = db.exec(select(User)).all()
+    if not users:
         raise HTTPException(status_code=404, detail="User not registered")
 
-    if not verify_password(password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Wrong password")
+    for user in users:
+        try:
+            if verify_password(password, user.password_hash):
+                return user
+        except Exception:
+            # If verification fails for a user (malformed hash), continue to next
+            continue
 
-    return user
+    # No user matched the provided password
+    raise HTTPException(status_code=401, detail="Wrong password")
 
 
 def login_user(db: Session, password: str) -> Tuple[User, str]:

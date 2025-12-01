@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response, Request
+from fastapi import APIRouter, Depends, Response, Request, Body
 from fastapi.responses import HTMLResponse
 from sqlmodel import Session
 from app.database import get_session
@@ -18,21 +18,38 @@ def initialize_superuser(password: str, db: Session = Depends(get_session)):
 @router.post("/login")
 def login(
     request: Request,
-    password: str,
-    response: Response,
+    password: str | None = None,
+    payload: dict | None = Body(None),
+    response: Response = None,
     db: Session = Depends(get_session)
 ):
     """Endpoint untuk login
 
     Supports HTMX: when `hx-request` header present, returns `HX-Redirect` to `/dashboard`.
     """
+    # Allow password to come from query param, JSON body, or form data
+    if password is None:
+        payload = payload or {}
+        password = payload.get('password') or request.query_params.get('password')
+
+    if password is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail="Missing password")
+
+    # Note: empty string is treated as an attempted password (will result in 401)
+
     user, token = login_user(db, password)
     # set httponly cookie so browser clients get the token automatically
+    if response is None:
+        response = Response()
     response.set_cookie("access_token", token, httponly=True, samesite="lax")
 
     # If the request comes from HTMX, instruct the client to redirect
     if request.headers.get("hx-request"):
-        return HTMLResponse(content="", status_code=200, headers={"HX-Redirect": "/dashboard"})
+        # Attach redirect header to the same response so cookies are preserved
+        response.headers["HX-Redirect"] = "/dashboard"
+        response.status_code = 200
+        return response
 
     return {"access_token": token, "token_type": "bearer"}
 
@@ -47,7 +64,10 @@ def logout(request: Request, response: Response):
     response.delete_cookie("access_token")
 
     if request.headers.get("hx-request"):
-        return HTMLResponse(content="", status_code=200, headers={"HX-Redirect": "/login"})
+        # Attach redirect header to the same response so cookie deletion is preserved
+        response.headers["HX-Redirect"] = "/login"
+        response.status_code = 200
+        return response
 
     return {"status": "logged_out"}
 

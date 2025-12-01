@@ -20,6 +20,8 @@ templates = Jinja2Templates(directory="frontend")
 def accounts_page(request: Request, page: int = 1, page_size: int = 50, db: Session = Depends(get_session), current_user: User = Depends(require_role('admin','accountant','viewer'))):
     """Render the Chart of Accounts page (HTMX + full page)."""
     result = list_accounts(db, page, page_size)
+    # determine role string early (used when rendering actions)
+    role = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
     # prepare rows for table.html component as list of dicts
     table_rows = []
     for a in result['rows']:
@@ -41,7 +43,6 @@ def accounts_page(request: Request, page: int = 1, page_size: int = 50, db: Sess
             'Actions': actions_html
         })
 
-    role = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
     return templates.TemplateResponse('pages/accounts.html', {"request": request, "table_rows": table_rows, "role": role})
 
 
@@ -58,6 +59,7 @@ def delete_confirm(request: Request, id: int, db: Session = Depends(get_session)
         return HTMLResponse(content="Not found", status_code=404)
     return templates.TemplateResponse('components/confirm_delete.html', {"request": request, "account": acc})
 
+@router.post("")
 @router.post("/")
 def create(data: Account, request: Request, db: Session = Depends(get_session), current_user: User = Depends(require_role('admin','accountant'))):
     """Create account. If called via HTMX, respond with HX-Redirect to refresh list."""

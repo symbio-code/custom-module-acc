@@ -17,8 +17,10 @@
       <button class="px-4 h-10 rounded-lg bg-primary/20 text-primary">Apply Filters</button>
     </form>
   </div>
-  <div class="mt-6">
-    {% include 'components/table.html' with cols=['Date','Reference','Description','Total Debit','Total Credit','Actions'] rows=rows %}
-  </div>
+      <div class="mt-6">
+        {% set cols = ['Date','Reference','Description','Total Debit','Total Credit','Actions'] %}
+        {% set rows = rows %}
+        {% include 'components/table.html' %}
+      </div>
 </div>
 {% endblock %}
