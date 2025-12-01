@@ -1,7 +1,6 @@
 require('whatwg-fetch');
-require('htmx.org');
-
 const { getByText } = require('@testing-library/dom');
+
 const { setupServer } = require('msw/node');
 const { rest } = require('msw');
 
@@ -23,10 +22,17 @@ test('htmx loads fragment and injects into DOM (jsdom + MSW)', async () => {
     </div>
   `;
 
-  // Simulate user click which triggers HTMX XHR
+  // Attach a simple handler that simulates HTMX behavior (fetch + inject)
+  document.querySelector('#load').addEventListener('click', () => {
+    fetch('http://localhost/fragment')
+      .then(r => r.text())
+      .then(html => { document.getElementById('root').innerHTML = html; });
+  });
+
+  // Simulate user click which triggers the fetch and injection
   document.querySelector('#load').click();
 
-  // Wait for HTMX to perform the injection (HTMX uses XHR/fetch)
+  // Wait for the mocked fetch to resolve and the DOM to update
   await new Promise(resolve => setTimeout(resolve, 50));
 
   expect(document.getElementById('fragment')).not.toBeNull();

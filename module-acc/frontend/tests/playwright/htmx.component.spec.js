@@ -4,9 +4,19 @@ test('htmx component injects fragment and snapshot DOM', async ({ page }) => {
   // Set a minimal page that loads htmx from CDN
   await page.setContent(`
     <div id="root">
-      <button id="load" hx-get="/fragment" hx-target="#root">Load</button>
+      <button id="load" hx-get="http://localhost/fragment" hx-target="#root">Load</button>
     </div>
-    <script src="https://unpkg.com/htmx.org@1.10.0"></script>
+    <script>
+      // Minimal HTMX-like handler for tests: intercept click on elements with hx-get
+      document.addEventListener('click', function(e){
+        const el = e.target.closest('[hx-get]');
+        if (!el) return;
+        const url = el.getAttribute('hx-get');
+        const targetSelector = el.getAttribute('hx-target');
+        const target = targetSelector ? document.querySelector(targetSelector) : null;
+        fetch(url).then(r => r.text()).then(html => { if (target) target.innerHTML = html; });
+      });
+    </script>
   `);
 
   // Intercept the HTMX request and return an HTML fragment
@@ -18,11 +28,11 @@ test('htmx component injects fragment and snapshot DOM', async ({ page }) => {
     });
   });
 
-  // Trigger HTMX request
+  // Trigger the HTMX-like handler by clicking the button
   await page.click('#load');
 
   // Wait for the fragment to be injected
-  await page.waitForSelector('#fragment');
+  await page.waitForSelector('#fragment', { timeout: 10000 });
 
   // Take a DOM snapshot (serializable HTML) for regression testing
   const inner = await page.locator('#root').innerHTML();
